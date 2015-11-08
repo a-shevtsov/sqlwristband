@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="shortcut icon" href="img/favicon.ico" />
+	<title>SQL Wristband - SQL Server Activity Tracker</title>
+
+	<!-- Bootstrap -->
+		<link href="css/bootstrap.min.css" rel="stylesheet">
+		<script src="js/jquery/jquery.min.js"></script> <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+		<script src="js/bs/bootstrap.min.js"></script> <!-- bootstrap -->
+		<script src="js/bs/moment.min.js"></script> <!-- prerequisite of datetimepicker -->
+		<script src="js/bs/bootstrap-datetimepicker.min.js"></script> <!-- datetimepicker -->
+		<link rel="stylesheet" type="text/css" href="css/bootstrap-datetimepicker.min.css" /> <!-- datetimepicker -->
+	<!-- Bootstrap -->
+
+	<!-- jqplot -->
+		<!--[if lt IE 9]><script type="text/javascript" src="js/jqplot/excanvas.min.js"></script><![endif]-->
+		<script type="text/javascript" src="js/jqplot/jquery.jqplot.min.js"></script> <!-- jqplot itself -->
+		<script type="text/javascript" src="js/jqplot/jqplot.cursor.min.js"></script> <!-- cursor and zoom handling -->
+		<script type="text/javascript" src="js/jqplot/jqplot.dateAxisRenderer.min.js"></script>
+		<script type="text/javascript" src="js/jqplot/jqplot.highlighter.js"></script>
+		<link rel="stylesheet" type="text/css" href="css/jquery.jqplot.css" /> <!-- jqplot CSS -->
+	<!-- jqplot -->
+
+	<!-- Tools -->
+		<script src="js/base64.js"></script>
+	<!-- Tools -->
+
+	<!-- customization -->
+		<link href="css/sqlwristband.css" rel="stylesheet" />
+</head>
+
+<body>
+	<!-- 'Message box' modal -->
+	<div class="modal fade" id="messageBox" tabindex="-1" role="dialog" aria-labelledby="messageBoxLabel" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal">
+						<span aria-hidden="true">&times;</span>
+						<span class="sr-only">Close</span>
+					</button>
+					<h4 class="modal-title" id="messageBoxLabel"></h4>
+				</div>
+				<div class="modal-body">
+					<span id="messageBoxText"></span>
+				</div>
+				<div class="modal-footer">
+					<button id="closeButton" type="button" class="btn btn-primary" data-dismiss="modal" onclick="activeModal='';">Close</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Main container -->
+	<div id="main-container">
+		<!-- Navigation bar -->
+		<nav id="header" class="navbar navbar-default" role="navigation">
+			<!-- Brand and toggle get grouped for better mobile display -->
+			<div class="navbar-header">
+				<button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar-collapse">
+					<span class="sr-only">Toggle navigation</span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+				<a class="navbar-brand" href="Index.html">sql wristband</a>
+				<span class="navbar-title">File Stats</span>
+			</div>
+
+			<!-- Collect the nav links, forms, and other content for toggling -->
+			<div class="collapse navbar-collapse" id="navbar-collapse">
+				<ul class="nav navbar-nav">
+					<li class="active"><a href="#ioOps" data-toggle="tab" onclick="showIoOps()">I/O Operations</a></li>
+					<li><a href="#ioStalls" data-toggle="tab" onclick="showIoStalls()">I/O Stalls</a>
+				</ul>
+				<ul class="nav navbar-nav navbar-right">
+				<li><a href="javascript:toggleRefresh();"><span class="glyphicon glyphicon-refresh"></span><span id="refreshCountdown">60</span></a></li>
+				<li><a href="javascript:reloadStatusTable();"><span class="glyphicon glyphicon-refresh"></span>Refresh</a></li>
+					<li><a href="Index.html"><span class="glyphicon glyphicon-dashboard"></span>Dashboard</a></li>
+				</ul>
+			</div> <!-- navbar-collapse -->
+		</nav> <!-- navbar -->
+
+		<!-- Main area -->
+		<div id="main-area">
+			<div class="row">
+				<!-- left area -->
+				<div id="tabContent" class="tab-content">
+					<div role="tabpanel" class="tab-pane active" id="ioOps">
+						<div id="chartIoOps" class="chart col-md-9">
+							<div class="jqPlot" id="ioOpsChartReads"></div>
+							<div id="ioOpsNoReadsData">Data is being collected...</div>
+							<div class="jqPlot" id="ioOpsChartWrites"></div>
+							<div id="ioOpsNoWritesData">Data is being collected...</div>
+						</div> <!-- /#chartIoOps -->
+					</div> <!-- /#ioOps -->
+					<div role="tabpanel" class="tab-pane" id="ioStalls">
+						<div id="chartIoStalls" class="chart col-md-9">
+							<div class="jqPlot" id="ioStallsChartReads"></div>
+							<div id="ioStallsNoReadsData">Data is being collected...</div>
+							<div class="jqPlot" id="ioStallsChartWrites"></div>
+							<div id="ioStallsNoWritesData">Data is being collected...</div>
+						</div> <!-- /#chartIoStalls -->
+					</div> <!-- /#ioStalls -->
+				</div> <!-- /#tabContent -->
+				<!-- right area -->
+				<div class="col-md-3 legend">
+					<!-- Interval split button -->
+					<div class="row first-input">
+						<div class="form-group">
+							<div class="input-group">
+								<div class="input-group-btn">
+									<button type="button" class="btn btn-default btn-title">Interval:</button>
+								</div>
+								<input type="text" class="form-control" id="intervalTitle" value="1 minute" readonly>
+								<div class="input-group-btn">
+									<button type="button" class="btn dropdown-toggle" data-toggle="dropdown">
+										<span class="caret"></span>
+										<span class="sr-only">Toggle Dropdown</span>
+									</button>
+									<ul class="dropdown-menu dropdown-menu-right" role="menu" id="intervalList">
+										<li value='1'>1 minute</li>
+										<li value='5'>5 minutes</li>
+										<li value='10'>10 minutes</li>
+										<li value='15'>15 minutes</li>
+										<li value='30'>30 minutes</li>
+										<li value='60'>1 hour</li>
+									</ul>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Range split button -->
+					<div class="row">
+						<div class="form-group">
+							<div class="input-group">
+								<div class="input-group-btn">
+									<button type="button" class="btn btn-default btn-title">Range:</button>
+								</div>
+								<input type="text" class="form-control" id="rangeTitle" value="30 minutes" readonly>
+								<div class="input-group-btn">
+									<button type="button" class="btn dropdown-toggle" data-toggle="dropdown">
+										<span class="caret"></span>
+										<span class="sr-only">Toggle Dropdown</span>
+									</button>
+									<ul class="dropdown-menu dropdown-menu-right" role="menu" id="rangeList">
+										<li value='30'>30 minutes</li>
+										<li value='60'>1 hour</li>
+										<li value='120'>2 hours</li>
+										<li value='180'>3 hours</li>
+										<li value='360'>6 hours</li>
+										<li value='720'>12 hours</li>
+										<li value='1440'>24 hours</li>
+										<li value='2160'>36 hours</li>
+										<li value='2880'>48 hours</li>
+									</ul>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Date from -->
+					<div class="row">
+						<div class="form-group">
+							<div class='input-group date' id='datetimepickerFrom'>
+								<div class="input-group-btn">
+									<button type="button" class="btn btn-default btn-title" data-toggle="dropdown">Start:</button>
+								</div>
+								<input type='text' class="form-control">
+								<span class="input-group-addon">
+									<span class="glyphicon glyphicon-calendar"></span>
+								</span>
+							</div>
+						</div>
+					</div>
+
+					<!-- Date to -->
+					<div class="row">
+						<div class="form-group">
+							<div class='input-group date' id='datetimepickerTo'>
+								<div class="input-group-btn">
+									<button type="button" class="btn btn-default btn-title" data-toggle="dropdown">End:</button>
+								</div>
+								<input type='text' class="form-control">
+								<span class="input-group-addon">
+									<span class="glyphicon glyphicon-calendar"></span>
+								</span>
+							</div>
+						</div>
+					</div>
+
+					<div id="ioOpsSeries">
+						<!-- File list - Reads -->
+						<h4>Reads</h4>
+						<ul id="ioOpsReadsSeries" class="series-list"></ul>
+
+						<!-- File list - Writes -->
+						<h4>Writes</h4>
+						<ul id="ioOpsWritesSeries" class="series-list"></ul>
+					</div> <!-- /#ioOpsSeries -->
+					<div id="ioStallsSeries" class="hidden">
+						<!-- File list - Reads -->
+						<h4>Reads</h4>
+						<ul id="ioStallsReadsSeries" class="series-list"></ul>
+
+						<!-- File list - Writes -->
+						<h4>Writes</h4>
+						<ul id="ioStallsWritesSeries" class="series-list"></ul>
+					</div> <!-- /#ioStallsSeries -->
+				</div> <!-- /.legend -->
+			</div> <!-- /.row -->
+		</div> <!-- main-area -->
+	</div> <!-- main-container -->
+
+	<!-- Footer -->
+	<footer>
+		<p>&copy; 2014-2015 Andrey Shevtsov</p>
+	</footer>
+
+	<!-- Java scripts -->
+	<script type="text/javascript" src="js/sqlwristband.js"></script>
+	<script type="text/javascript">
+	currentTab = 'ioOps';
+
+	ioOpsReloading = false;
+	ioOpsReadsLoaded = false;
+	ioOpsWritesLoaded = false;
+
+	ioStallsReloading = false;
+	ioStallsReadsLoaded = false;
+	ioStallsWritesLoaded = false;
+
+	targetId = null;
+	wsUrl = null;
+
+	plotReads = null;
+	plotWrites = null;
+
+	seriesNames = [];
+
+	rangeListIsChanging = false;
+	interval = 1;
+	range = 30;
+
+	endDateDt = new Date();
+	startDateDt = new Date(endDateDt.getTime() - range*60000);
+
+	startDateStr = formatDate(startDateDt);
+	endDateStr = formatDate(endDateDt);
+	
+	ioOpsPlots = [];
+	ioStallsPlots = [];
+
+	plotWidth = 600;
+
+	ioOpsPlots['chartReads'] = {
+		heightPct: 50,
+		chart: null,
+		jqplotOptions: {
+			series: [null],
+			title: {
+				text: 'Reads/sec',
+				show: true,
+			},
+			seriesDefaults: {
+				showMarker: true,
+				lineWidth: 1,
+				markerOptions: {
+					show: true,
+					size: 6
+				}
+			},
+			axes: {
+				xaxis: {
+					renderer: $.jqplot.DateAxisRenderer,
+					tickOptions: {formatString:'%R\n%m/%d'}
+				},
+				yaxis: {
+					min: 0
+				}
+			},
+			cursor:{
+				show: true,
+				zoom: true,
+				showTooltip: false,
+				constrainZoomTo: 'x'
+			}
+		}
+	};
+
+	ioOpsPlots['chartWrites'] = {
+		heightPct: 50,
+		chart: null,
+		jqplotOptions: {
+			series: [null],
+			title: {
+				text: 'Writes/sec',
+				show: true,
+			},
+			seriesDefaults: {
+				showMarker: true,
+				lineWidth: 1,
+				markerOptions: {
+					show: true,
+					size: 6
+				}
+			},
+			axes: {
+				xaxis: {
+					renderer: $.jqplot.DateAxisRenderer,
+					tickOptions: {formatString:'%R\n%m/%d'}
+				},
+				yaxis: {
+					min: 0
+				}
+			},
+			cursor:{
+				show: true,
+				zoom: true,
+				showTooltip: false,
+				constrainZoomTo: 'x'
+			}
+		}
+	};
+
+	ioStallsPlots['chartReads'] = {
+		heightPct: 50,
+		chart: null,
+		jqplotOptions: {
+			series: [null],
+			title: {
+				text: 'I/O Stalls - Reads, ms',
+				show: true,
+			},
+			seriesDefaults: {
+				showMarker: true,
+				lineWidth: 1,
+				markerOptions: {
+					show: true,
+					size: 6
+				}
+			},
+			axes: {
+				xaxis: {
+					renderer: $.jqplot.DateAxisRenderer,
+					tickOptions: {formatString:'%R\n%m/%d'}
+				},
+				yaxis: {
+					min: 0
+				}
+			},
+			cursor:{
+				show: true,
+				zoom: true,
+				showTooltip: false,
+				constrainZoomTo: 'x'
+			}
+		}
+	};
+
+	ioStallsPlots['chartWrites'] = {
+		heightPct: 50,
+		chart: null,
+		jqplotOptions: {
+			series: [null],
+			title: {
+				text: 'I/O Stalls - Writes, ms',
+				show: true,
+			},
+			seriesDefaults: {
+				showMarker: true,
+				lineWidth: 1,
+				markerOptions: {
+					show: true,
+					size: 6
+				}
+			},
+			axes: {
+				xaxis: {
+					renderer: $.jqplot.DateAxisRenderer,
+					tickOptions: {formatString:'%R\n%m/%d'}
+				},
+				yaxis: {
+					min: 0
+				}
+			},
+			cursor:{
+				show: true,
+				zoom: true,
+				showTooltip: false,
+				constrainZoomTo: 'x'
+			}
+		}
+	};
+
+	function setCheckboxHandler(ulId, series, plot) {
+		// checkbox action handling
+		$('#' + ulId + ' > li > input.legendVis').click(function () {
+			var series_num = -1;
+			for (var i = 0; i < series.length; i++) {
+				if (series[i].label == this.value) {
+					series_num = i;
+					break;
+				}
+			}
+
+			plot.chart.series[series_num].show = this.checked;
+			// Set bottom padding to zero (100%)
+			plot.chart.axes.yaxis.padMin = 1.0;
+			plot.chart.replot({resetAxes: ['yaxis']});
+		}); // '.legendVis'.click
+	}
+
+	function reFetchDataError(xhr, status, err) {
+		$('.chart').css('opacity', '1');
+		messageBox(err, 'Error');
+	}
+
+	function reloadReadsDataSuccess(jsondata) {
+		var readsData = [];
+		var readsSeries = [];
+
+		$.each(jsondata, function (i, item) {
+			readsData.push(item['data']);
+			readsSeries.push({label: item['series']});
+		});
+
+		if (currentTab == 'ioOps') {
+			ioOpsReadsLoaded = true;
+			if (ioOpsWritesLoaded)
+				ioOpsReloading = false;
+		}
+		else {
+			ioStallsReadsLoaded = true;
+			if (ioStallsWritesLoaded)
+				ioStallsReloading = false;
+		}
+
+		plots['chartReads'].jqplotOptions.series = readsSeries;
+
+		$('#' + currentTab + 'ReadsSeries').empty();
+		$.each(readsSeries, function (i, item) {
+			addCheckboxLiToUl(currentTab + 'ReadsSeries', 'legendVis', item['label'], true, item['label']);
+		});
+
+		setCheckboxHandler(currentTab + 'ReadsSeries', readsSeries, plots['chartReads']);
+
+		replotReadsChart(readsData);
+	}
+
+	function reloadWritesDataSuccess(jsondata) {
+		var writesData = [];
+		var writesSeries = [];
+
+		$.each(jsondata, function (i, item) {
+			writesData.push(item['data']);
+			writesSeries.push({label: item['series']});
+		});
+
+		if (currentTab == 'ioOps') {
+			ioOpsWritesLoaded = true;
+			if (ioOpsReadsLoaded)
+				ioOpsReloading = false;
+		}
+		else {
+			ioStallsWritesLoaded = true;
+			if (ioStallsReadsLoaded)
+				ioStallsReloading = false;
+		}
+
+		plots['chartWrites'].jqplotOptions.series = writesSeries;
+
+		$('#' + currentTab + 'WritesSeries').empty();
+		$.each(writesSeries, function (i, item) {
+			addCheckboxLiToUl(currentTab + 'WritesSeries', 'legendVis', item['label'], true, item['label']);
+		});
+
+		setCheckboxHandler(currentTab + 'WritesSeries', writesSeries, plots['chartWrites']);
+
+		replotWritesChart(writesData);
+	}
+
+	function replotReadsChart(readsData)
+	{
+		var plotReads = plots['chartReads'].chart;
+		plotReads.destroy();
+
+		if (readsData.length == 0) {
+			$('#' + currentTab + 'ChartReads').hide();
+			$('#' + currentTab + 'NoReadsData').show();
+		} else {
+			$('#' + currentTab + 'NoReadsData').hide();
+			$('#' + currentTab + 'NoChartReads').show();
+
+			plotReads = $.jqplot(currentTab + 'ChartReads', readsData, plots['chartReads'].jqplotOptions);
+			plotReads.themeEngine.newTheme('plotTheme', plotTheme);
+			plotReads.activateTheme('plotTheme');
+
+			plots['chartReads'].chart = plotReads;
+		}
+
+		$('.chart').css('opacity', '1');
+	}
+
+	function replotWritesChart(writesData)
+	{
+		var plotWrites = plots['chartWrites'].chart;
+		plotWrites.destroy();
+
+		if (writesData.length == 0) {
+			$('#' + currentTab + 'ChartWrites').hide();
+			$('#' + currentTab + 'NoWritesData').show();
+		} else {
+			$('#' + currentTab + 'NoWritesData').hide();
+			$('#' + currentTab + 'ChartWrites').show();
+
+			plotWrites = $.jqplot(currentTab + 'ChartWrites', writesData, plots['chartWrites'].jqplotOptions);
+			plotWrites.themeEngine.newTheme('plotTheme', plotTheme);
+			plotWrites.activateTheme('plotTheme');
+
+			plots['chartWrites'].chart = plotWrites;
+		}
+
+		$('.chart').css('opacity', '1');
+	}
+
+	function startDataRefresh() {
+		$('.chart').css('opacity', '0.5');
+
+		if (currentTab == 'ioOps') {
+			ioOpsReloading = true;
+			ioOpsReadsLoaded = false;
+			ioOpsWritesLoaded = false;
+			var wsUrl = '/ws/fastmulti/Range/SQL%20Server%20File%20Stats/' + targetId + '/' + startDateStr + '/' + endDateStr + '/' + interval + '/Number%20of%20reads/5/Physical%20File%20Name';
+
+			requestDataLoad(wsUrl, reloadReadsDataSuccess);
+
+			var wsUrl = '/ws/fastmulti/Range/SQL%20Server%20File%20Stats/' + targetId + '/' + startDateStr + '/' + endDateStr + '/' + interval + '/Number%20of%20writes/5/Physical%20File%20Name';
+
+			requestDataLoad(wsUrl, reloadWritesDataSuccess);
+		}
+		else {
+			ioStallsReloading = true;
+			ioStallsReadsLoaded = false;
+			ioStallsWritesLoaded = false;
+			var wsUrl = '/ws/fastmulti/Range/SQL%20Server%20File%20Stats/' + targetId + '/' + startDateStr + '/' + endDateStr + '/' + interval + '/IO%20stall%20read%20ms/5/Physical%20File%20Name';
+
+			requestDataLoad(wsUrl, reloadReadsDataSuccess);
+
+			var wsUrl = '/ws/fastmulti/Range/SQL%20Server%20File%20Stats/' + targetId + '/' + startDateStr + '/' + endDateStr + '/' + interval + '/IO%20stall%20write%20ms/5/Physical%20File%20Name';
+
+			requestDataLoad(wsUrl, reloadWritesDataSuccess);
+		}
+	}
+
+	function refreshData() {
+		resetCountdown();
+
+		ioOpsReloading = false;
+		ioOpsReadsLoaded = false;
+		ioOpsWritesLoaded = false;
+		ioStallsReloading = false;
+		ioStallsReadsLoaded = false;
+		ioStallsWritesLoaded = false;
+
+		endDateDt = new Date();
+		startDateDt = new Date(endDateDt.getTime() - range*60000);
+
+		startDateStr = formatDate(startDateDt);
+		endDateStr = formatDate(endDateDt);
+
+		rangeListIsChanging = true;
+		$('#datetimepickerFrom').data("DateTimePicker").setDate(startDateDt);
+		$('#datetimepickerTo').data("DateTimePicker").setDate(endDateDt);
+		rangeListIsChanging = false;
+
+		startDataRefresh();
+	}
+
+	// datetimepickerFrom change handling
+	$('#datetimepickerFrom').on("dp.change", function(e) {
+		startDateDt = new Date($('#datetimepickerFrom').data("DateTimePicker").getDate());
+		startDateStr = formatDate(startDateDt);
+
+		if(!rangeListIsChanging) {
+			$("#rangeTitle").val('Custom');
+			startDataRefresh();
+		}	
+	});
+
+	// datetimepickerTo change handling
+	$('#datetimepickerTo').on("dp.change", function(e) {
+		endDateDt = new Date($('#datetimepickerTo').data("DateTimePicker").getDate());
+		endDateStr = formatDate(endDateDt);
+
+		if(!rangeListIsChanging) {
+			$("#rangeTitle").val('Custom');
+			startDataRefresh();
+		}
+	});
+
+	// interval drop-down list action handling
+	$("#intervalList li").click(function() {
+		$("#intervalTitle").val($(this).text());
+		
+		interval = $(this).val();
+
+		startDataRefresh();
+	});
+
+	// range drop-down list action handling
+	$("#rangeList li").click(function() {
+		$("#rangeTitle").val($(this).text());
+
+		range = $(this).val();
+		startDateDt = new Date(endDateDt.getTime() - range*60000);
+		// set datetime picker value
+		rangeListIsChanging = true;
+		$('#datetimepickerFrom').data("DateTimePicker").setDate(startDateDt);
+		
+		startDateStr = formatDate(startDateDt);
+
+		startDataRefresh();
+		rangeListIsChanging = false;
+	});
+
+	function showIoStalls()
+	{
+		if (currentTab == 'ioStalls')
+			return;
+		currentTab = 'ioStalls';
+		plots = ioStallsPlots;
+		$("#ioOpsSeries").addClass('hidden');
+		$("#ioStallsSeries").removeClass('hidden');
+		if (!ioStallsReadsLoaded && !ioStallsWritesLoaded && !ioStallsReloading)
+			startDataRefresh();
+	}
+
+	function showIoOps()
+	{
+		if (currentTab == 'ioOps')
+			return;
+		currentTab = 'ioOps';
+		plots = ioOpsPlots;
+		$("#ioStallsSeries").addClass('hidden');
+		$("#ioOpsSeries").removeClass('hidden');
+	}
+
+	$(document).ready(function() {
+		targetId = getURLParameter('id');
+
+		if (targetId == null)
+		{
+			messageBox("Parameter [id] was not supplied", "Error");
+			return;
+		}
+
+		$.jqplot._noToImageButton = true;
+		$.jqplot.config.enablePlugins = true;
+		$.jqplot.preDrawHooks.push(function() { var c = this.plugins.cursor; });
+
+		rangeListIsChanging = true;
+
+		$('#datetimepickerFrom').datetimepicker();
+		$('#datetimepickerFrom').data("DateTimePicker").setDate(startDateDt);
+		
+		$('#datetimepickerTo').datetimepicker();
+		$('#datetimepickerTo').data("DateTimePicker").setDate(endDateDt);
+
+		rangeListIsChanging = false;
+
+		// ioOps
+		ioOpsPlotReads = $.jqplot('ioOpsChartReads', [[null]], ioOpsPlots['chartReads'].jqplotOptions);
+		ioOpsPlotReads.themeEngine.newTheme('plotTheme', plotTheme);
+		ioOpsPlotReads.activateTheme('plotTheme');
+		plotWidth = ioOpsPlotReads._width;
+
+		ioOpsPlots['chartReads'].chart = ioOpsPlotReads;
+
+		ioOpsPlotWrites = $.jqplot('ioOpsChartWrites', [[null]], ioOpsPlots['chartWrites'].jqplotOptions);
+		ioOpsPlotWrites.themeEngine.newTheme('plotTheme', plotTheme);
+		ioOpsPlotWrites.activateTheme('plotTheme');
+
+		ioOpsPlots['chartWrites'].chart = ioOpsPlotWrites;
+		set_chart_div_height(ioOpsPlots, 45);
+
+		// ioStalls
+		ioStallsPlots['chartReads'].jqplotOptions.width = plotWidth;
+		ioStallsPlotReads = $.jqplot('ioStallsChartReads', [[null]], ioStallsPlots['chartReads'].jqplotOptions);
+		ioStallsPlotReads.themeEngine.newTheme('plotTheme', plotTheme);
+		ioStallsPlotReads.activateTheme('plotTheme');
+
+		ioStallsPlots['chartReads'].chart = ioStallsPlotReads;
+
+		ioStallsPlots['chartWrites'].jqplotOptions.width = plotWidth;
+		ioStallsPlotWrites = $.jqplot('ioStallsChartWrites', [[null]], ioStallsPlots['chartWrites'].jqplotOptions);
+		ioStallsPlotWrites.themeEngine.newTheme('plotTheme', plotTheme);
+		ioStallsPlotWrites.activateTheme('plotTheme');
+
+		ioStallsPlots['chartWrites'].chart = ioStallsPlotWrites;
+		set_chart_div_height(ioStallsPlots, 45);
+
+		plots = ioOpsPlots;
+
+		enable_multi_plot_zooming();
+
+		startDataRefresh();
+
+		countdown(refreshData);
+	}); // $(document).ready()
+
+	</script>
+</body>
+</html>

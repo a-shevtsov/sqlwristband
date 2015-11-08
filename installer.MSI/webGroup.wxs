@@ -1,0 +1,127 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <!-- Web folder -->
+  <Fragment>
+    <DirectoryRef Id="INSTALLFOLDER">
+      <Directory Id="dir930BEE7F86DAA1C8405267E730B9DBEB" Name="web" />
+    </DirectoryRef>
+  </Fragment>
+
+  <!-- Subfolders -->
+  <Fragment>
+    <DirectoryRef Id="dir88DF9643F935054A7B1B315CE1A9683E">
+      <Directory Id="dir27BADE456BB98D7898A43EAC2DF4CDE7" Name="jquery" />
+    </DirectoryRef>
+    <DirectoryRef Id="dir88DF9643F935054A7B1B315CE1A9683E">
+      <Directory Id="dir502830E17CD45684C11B81267DCE3588" Name="bs" />
+    </DirectoryRef>
+    <DirectoryRef Id="dir930BEE7F86DAA1C8405267E730B9DBEB">
+      <Directory Id="dir5E2727CE71DB42E7B528060C3B127630" Name="css" />
+    </DirectoryRef>
+    <DirectoryRef Id="dir930BEE7F86DAA1C8405267E730B9DBEB">
+      <Directory Id="dir88DF9643F935054A7B1B315CE1A9683E" Name="js" />
+    </DirectoryRef>
+    <DirectoryRef Id="dir88DF9643F935054A7B1B315CE1A9683E">
+      <Directory Id="dirB871FF3247507884870533F5815BE451" Name="jqplot" />
+    </DirectoryRef>
+    <DirectoryRef Id="dir930BEE7F86DAA1C8405267E730B9DBEB">
+      <Directory Id="dirEF12D7BC314134BA22291247AD93212C" Name="fonts" />
+    </DirectoryRef>
+    <DirectoryRef Id="dir930BEE7F86DAA1C8405267E730B9DBEB">
+      <Directory Id="dirEF95BEADAC44E6FD0CBF32F822371D0F" Name="img" />
+    </DirectoryRef>
+  </Fragment>
+
+  <!-- Files -->
+  <Fragment>
+    <ComponentGroup Id="WebGroup">
+      <Component Id="cmpCF13198D3DD2B1BB5A1A779827678C02" Directory="dir930BEE7F86DAA1C8405267E730B9DBEB" Guid="{9E80C0CD-7C3B-4FE4-9851-2B910866AF0A}" Win64="yes">
+        <File Id="fil9F4960053E6D157FDA34C47BE08E52C3" KeyPath="yes" Source="..\qa\web\CPU_IO.html" />
+      </Component>
+      <Component Id="cmp62C6F4EE1C2B042DFD8767F9AFF0F7C9" Directory="dir930BEE7F86DAA1C8405267E730B9DBEB" Guid="{5244840C-C526-4C5F-AD82-02A1E178710F}" Win64="yes">
+        <File Id="fil5C64161D174E995DF28EDBA2EA911116" KeyPath="yes" Source="..\qa\web\FileStats.html" />
+      </Component>
+      <Component Id="cmp7FAB2ED5E30C6755CA1576956A7C7520" Directory="dir930BEE7F86DAA1C8405267E730B9DBEB" Guid="{D1CB2FD5-F1B2-48C3-BBDB-CEF3CEBFE23C}" Win64="yes">
+        <File Id="filB429CACF5A693CD94663481C497CCB39" KeyPath="yes" Source="..\qa\web\Index.html" />
+      </Component>
+      <Component Id="cmp268955D5D8D8AEDF0550A19F1E55A918" Directory="dir930BEE7F86DAA1C8405267E730B9DBEB" Guid="{E3E29BE9-674A-4A1B-AC73-001E2319A4E6}" Win64="yes">
+        <File Id="fil61EE236A49BC5DBC239C17EF09924B8B" KeyPath="yes" Source="..\qa\web\Settings.html" />
+      </Component>
+      <Component Id="cmpAEF0D254D039DC11D8D4ECBB00D0E6C2" Directory="dir930BEE7F86DAA1C8405267E730B9DBEB" Guid="{333DA25F-4B8E-458F-A4B6-828042872DEE}" Win64="yes">
+        <File Id="fil1FFC27FA00A898A727BB109A0CACAF43" KeyPath="yes" Source="..\qa\web\WaitStats.html" />
+      </Component>
+      <Component Id="cmp9CE124B76537AFE35928163ED22738F4" Directory="dir5E2727CE71DB42E7B528060C3B127630" Guid="{CD7D384D-F3B1-4B09-8210-583733ADC3AD}" Win64="yes">
+        <File Id="filF755FA85B960BF79DAEC264A34FD2CDC" KeyPath="yes" Source="..\qa\web\css\bootstrap-datetimepicker.min.css" />
+      </Component>
+      <Component Id="cmp613E215B8B04E9F671AD568C928C538C" Directory="dir5E2727CE71DB42E7B528060C3B127630" Guid="{543C194F-357F-43DA-ACC1-BD3A79169E41}" Win64="yes">
+        <File Id="filEC438333463BC0860746F9BE1B7628A6" KeyPath="yes" Source="..\qa\web\css\bootstrap.min.css" />
+      </Component>
+      <Component Id="cmp9EA1436269BE986BF3AF70E4EA5214BC" Directory="dir5E2727CE71DB42E7B528060C3B127630" Guid="{01C615A7-D06E-4E50-9479-CB148C2F9AA5}" Win64="yes">
+        <File Id="fil3D4F07BBE500DBF688D812BE15DF03AF" KeyPath="yes" Source="..\qa\web\css\jquery.jqplot.css" />
+      </Component>
+      <Component Id="cmpF8EE8E127371640F2A312CA7D018E9DB" Directory="dir5E2727CE71DB42E7B528060C3B127630" Guid="{F6B0E7F9-8E25-4982-AEE9-20CDB8238594}" Win64="yes">
+        <File Id="filBEFC28EDEA8CA0359AEDC4221E4BBEB6" KeyPath="yes" Source="..\qa\web\css\sqlwristband.css" />
+      </Component>
+      <Component Id="cmpEBDB1C6BD2B291EEDAA46F6F541714C4" Directory="dirEF12D7BC314134BA22291247AD93212C" Guid="{7962E880-8A40-43E6-AEDB-43F84340CC76}" Win64="yes">
+        <File Id="filD633A007375486EDF85E9E64BFDC720D" KeyPath="yes" Source="..\qa\web\fonts\FugazOne-Regular.ttf" />
+      </Component>
+      <Component Id="cmpE551E48F98108AB4CFD3AD4C93A0D845" Directory="dirEF12D7BC314134BA22291247AD93212C" Guid="{F6FE67C9-9619-4689-AB6B-A7A778270FAB}" Win64="yes">
+        <File Id="fil41C521DA945671CA90F02DC15256C6BF" KeyPath="yes" Source="..\qa\web\fonts\glyphicons-halflings-regular.eot" />
+      </Component>
+      <Component Id="cmp179CBDB5BA899FB499BCFCB7002150CA" Directory="dirEF12D7BC314134BA22291247AD93212C" Guid="{4C35A5A0-6FE0-45AE-B089-4FD1ECBD5DC8}" Win64="yes">
+        <File Id="filE6EEB5BD671BCE9D83ED011DB55D68E9" KeyPath="yes" Source="..\qa\web\fonts\glyphicons-halflings-regular.svg" />
+      </Component>
+      <Component Id="cmpBEE44F227D53504088DA5341C4D37830" Directory="dirEF12D7BC314134BA22291247AD93212C" Guid="{8E5CA34B-FD10-4CCE-B8C2-C812D35C1541}" Win64="yes">
+        <File Id="filF8E103E77B17A7BFED8CDF4BC37BBD56" KeyPath="yes" Source="..\qa\web\fonts\glyphicons-halflings-regular.ttf" />
+      </Component>
+      <Component Id="cmp08647C42F38525F6714D4E95A272F0BD" Directory="dirEF12D7BC314134BA22291247AD93212C" Guid="{FD73FA72-71D8-4314-8170-CEAD46E5885C}" Win64="yes">
+        <File Id="fil29A3534D17A23E341525F8E7EFAD322B" KeyPath="yes" Source="..\qa\web\fonts\glyphicons-halflings-regular.woff" />
+      </Component>
+      <Component Id="cmp942D54AD65C51B32A5A4985EEDA13ACC" Directory="dirEF12D7BC314134BA22291247AD93212C" Guid="{F3DB3C36-57DE-407F-AD46-CAE04493BF92}" Win64="yes">
+        <File Id="filF48FA6D4ED2561F06899B839B9095796" KeyPath="yes" Source="..\qa\web\fonts\OFL.txt" />
+      </Component>
+      <Component Id="cmpC2D234D0D5192DEB9DB4E289F3D692B7" Directory="dirEF95BEADAC44E6FD0CBF32F822371D0F" Guid="{A460D1BF-75B1-49A7-A333-4FA15CB7F2A0}" Win64="yes">
+        <File Id="filC8BBE48737D6F4B25963CB1D6D45B4D7" KeyPath="yes" Source="..\qa\web\img\favicon.ico" />
+      </Component>
+      <Component Id="cmp8AA431CC67995D9B1EEC3C3258BFD882" Directory="dir88DF9643F935054A7B1B315CE1A9683E" Guid="{F1ACD7D9-31F4-481A-B130-4178C9D17E42}" Win64="yes">
+        <File Id="fil6150CE8243FF50090F9681650E37AECF" KeyPath="yes" Source="..\qa\web\js\base64.js" />
+      </Component>
+      <Component Id="cmp9078C6A946D50F041ED46AFC15D75EC2" Directory="dir88DF9643F935054A7B1B315CE1A9683E" Guid="{DE261954-AF6E-4178-AF9B-2BB8892A4C73}" Win64="yes">
+        <File Id="fil478157AF4E244DA628FDAC9550972909" KeyPath="yes" Source="..\qa\web\js\sqlwristband.js" />
+      </Component>
+      <Component Id="cmp3A3ED27A4365E33842FA153E422C7051" Directory="dir502830E17CD45684C11B81267DCE3588" Guid="{C2502EE7-0704-4B70-994C-7ED418C61CFD}" Win64="yes">
+        <File Id="filE923C794809EE694CF4E3AF3DBC20A4F" KeyPath="yes" Source="..\qa\web\js\bs\bootstrap-datetimepicker.min.js" />
+      </Component>
+      <Component Id="cmp38E92842F3CEE4D1537B743870DCA1F5" Directory="dir502830E17CD45684C11B81267DCE3588" Guid="{F01F4E89-7855-43BE-9EC8-DD861A05433E}" Win64="yes">
+        <File Id="fil20E917E35A3DA413DCA2B1ACCD516F6C" KeyPath="yes" Source="..\qa\web\js\bs\bootstrap.min.js" />
+      </Component>
+      <Component Id="cmp9B5E8A6CD68C06208349C74DE546D781" Directory="dir502830E17CD45684C11B81267DCE3588" Guid="{177676D8-05C3-438D-BA7B-F2C925656CEB}" Win64="yes">
+        <File Id="filC814E1E3EDF9D489384985619A5CD2E1" KeyPath="yes" Source="..\qa\web\js\bs\moment.min.js" />
+      </Component>
+      <Component Id="cmp1AC50A332453CB7608FACBEE0D149792" Directory="dir502830E17CD45684C11B81267DCE3588" Guid="{1684D00E-6C33-4D9D-9C2F-44AE19925FFF}" Win64="yes">
+        <File Id="fil3EF17D26D5BD5DE676B7A06D6164C3FD" KeyPath="yes" Source="..\qa\web\js\bs\popover.js" />
+      </Component>
+      <Component Id="cmpC5E921117EB338EF0E9F2B438C555020" Directory="dirB871FF3247507884870533F5815BE451" Guid="{0BBAEDDC-C916-48C9-B5DA-1CEF46CEAB83}" Win64="yes">
+        <File Id="fil278081DAF8E991660F30B2024EF6D541" KeyPath="yes" Source="..\qa\web\js\jqplot\excanvas.min.js" />
+      </Component>
+      <Component Id="cmp1654E39BE815A2958D9DDAE158D210FF" Directory="dirB871FF3247507884870533F5815BE451" Guid="{1DDC81B2-FFE4-4FE1-91B5-E1316AE7FDC1}" Win64="yes">
+        <File Id="fil6456E6E8EC803402A38438A9001DB0B4" KeyPath="yes" Source="..\qa\web\js\jqplot\jqplot.cursor.min.js" />
+      </Component>
+      <Component Id="cmp8C4DB9E4E6D89ECFCCD82FA25B2612D5" Directory="dirB871FF3247507884870533F5815BE451" Guid="{7D1A350B-BF43-434F-8128-F2F42A361D14}" Win64="yes">
+        <File Id="filC7C2D261B11FBEC9C7EB5385C54916CF" KeyPath="yes" Source="..\qa\web\js\jqplot\jqplot.dateAxisRenderer.min.js" />
+      </Component>
+      <Component Id="cmpBC6C29D8C2E3D7F60C26C186578E0150" Directory="dirB871FF3247507884870533F5815BE451" Guid="{31A54D47-207F-4FF2-99FF-BF9575C7CB26}" Win64="yes">
+        <File Id="filDBC0C62C5B647D2DA13FCE30F782EC48" KeyPath="yes" Source="..\qa\web\js\jqplot\jqplot.highlighter.js" />
+      </Component>
+      <Component Id="cmpAF66AF42E9799A0D0547566D6E74B9B4" Directory="dirB871FF3247507884870533F5815BE451" Guid="{8D87E372-57C1-4EAC-9149-B9DC1242ADA6}" Win64="yes">
+        <File Id="fil268DA40B5C6DC5507D91EBC47A9FE26A" KeyPath="yes" Source="..\qa\web\js\jqplot\jqplot.json2.min.js" />
+      </Component>
+      <Component Id="cmpBCF50F682652CC6665A074F55A207737" Directory="dirB871FF3247507884870533F5815BE451" Guid="{D42AAD22-F652-4EC1-A2BE-FC74354D683E}" Win64="yes">
+        <File Id="filC17F00DD4C14DB3705153E5F5E654282" KeyPath="yes" Source="..\qa\web\js\jqplot\jquery.jqplot.min.js" />
+      </Component>
+      <Component Id="cmp44D620D0F5DF37C7F730B5F873F865DF" Directory="dir27BADE456BB98D7898A43EAC2DF4CDE7" Guid="{5B8122D1-9548-49DD-A95F-37ED4A177FFC}" Win64="yes">
+        <File Id="filABEAD8479C8F5FF44E474298C5D3B37E" KeyPath="yes" Source="..\qa\web\js\jquery\jquery.min.js" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+</Wix>

@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="shortcut icon" href="img/favicon.ico" />
+	<title>SQL Wristband - SQL Server Activity Tracker</title>
+
+	<!-- Bootstrap -->
+		<link href="css/bootstrap.min.css" rel="stylesheet">
+		<script src="js/jquery/jquery.min.js"></script> <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+		<script src="js/bs/bootstrap.min.js"></script> <!-- bootstrap -->
+		<script src="js/bs/moment.min.js"></script> <!-- prerequisite of datetimepicker -->
+		<script src="js/bs/bootstrap-datetimepicker.min.js"></script> <!-- datetimepicker -->
+		<link rel="stylesheet" type="text/css" href="css/bootstrap-datetimepicker.min.css" /> <!-- datetimepicker -->
+	<!-- Bootstrap -->
+
+	<!-- jqplot -->
+		<!--[if lt IE 9]><script type="text/javascript" src="js/jqplot/excanvas.min.js"></script><![endif]-->
+		<script type="text/javascript" src="js/jqplot/jquery.jqplot.min.js"></script> <!-- jqplot itself -->
+		<script type="text/javascript" src="js/jqplot/jqplot.cursor.min.js"></script> <!-- cursor and zoom handling -->
+		<script type="text/javascript" src="js/jqplot/jqplot.dateAxisRenderer.min.js"></script>
+		<script type="text/javascript" src="js/jqplot/jqplot.highlighter.js"></script>
+		<script type="text/javascript" src="js/jqplot/jqplot.json2.min.js"></script>
+		<link rel="stylesheet" type="text/css" href="css/jquery.jqplot.css" /> <!-- jqplot CSS -->
+	<!-- jqplot -->
+
+	<!-- Tools -->
+		<script src="js/base64.js"></script>
+	<!-- Tools -->
+
+	<!-- customization -->
+		<link href="css/sqlwristband.css" rel="stylesheet" />
+</head>
+
+<body>
+	<!-- 'Message box' modal -->
+	<div class="modal fade" id="messageBox" tabindex="-1" role="dialog" aria-labelledby="messageBoxLabel" aria-hidden="true">
+	  <div class="modal-dialog">
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <button type="button" class="close" data-dismiss="modal">
+	        	<span aria-hidden="true">&times;</span>
+	        	<span class="sr-only">Close</span>
+	        </button>
+	        <h4 class="modal-title" id="messageBoxLabel"></h4>
+	      </div>
+	      <div class="modal-body">
+	      	<span id="messageBoxText"></span>
+	      </div>
+	      <div class="modal-footer">
+	        <button id="closeButton" type="button" class="btn btn-primary" data-dismiss="modal" onclick="activeModal='';">Close</button>
+	      </div>
+	    </div>
+	  </div>
+	</div>
+
+	<!-- Navigation bar -->
+	<nav id="header" class="navbar navbar-default" role="navigation">
+		<!-- Brand and toggle get grouped for better mobile display -->
+		<div class="navbar-header">
+			<button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar-collapse">
+			<span class="sr-only">Toggle navigation</span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+			</button>
+			<a class="navbar-brand" href="Index.html">sql wristband</a>
+			<span class="navbar-title">CPU/IO</span>
+		</div>
+
+		<!-- Collect the nav links, forms, and other content for toggling -->
+		<div class="collapse navbar-collapse" id="navbar-collapse">
+			<ul class="nav navbar-nav navbar-right">
+				<li><a href="javascript:toggleRefresh();"><span class="glyphicon glyphicon-refresh"></span><span id="refreshCountdown">60</span></a></li>
+				<li><a href="javascript:reloadStatusTable();"><span class="glyphicon glyphicon-refresh"></span>Refresh</a></li>
+				<li><a href="Index.html"><span class="glyphicon glyphicon-dashboard"></span>Dashboard</a></li>
+			</ul>
+		</div> <!-- /.navbar-collapse -->
+	</nav> <!-- navbar -->
+
+	<!-- Main container -->
+	<div class="main-container">
+		<!-- Main area -->
+		<div id="main-area">
+			<div class="row">
+				<!-- left area -->
+				<div class="chart col-md-9" id="chart">
+					<div id="messagediv"></div>
+					<div class="jqPlot" id="chartdivcpu"></div>
+					<div id="noCpuData">Data is being collected...</div>
+					<div class="jqPlot" id="chartdivio"></div>
+					<div id="noIoData">Data is being collected...</div>
+				</div><!-- col-md-9 -->
+
+				<!-- right area -->
+				<div class="col-md-3" id="legend">
+
+					<!-- Interval split button -->
+					<div class="row first-input">
+						<div class="form-group">
+							<div class="input-group">
+								<div class="input-group-btn">
+									<button type="button" class="btn btn-default btn-title">Interval:</button>
+								</div>
+								<input type="text" class="form-control" id="intervalTitle" value="1 minute" readonly></input>
+								<div class="input-group-btn">
+									<button type="button" class="btn dropdown-toggle" data-toggle="dropdown">
+										<span class="caret"></span>
+										<span class="sr-only">Toggle Dropdown</span>
+									</button>
+									<ul class="dropdown-menu dropdown-menu-right" role="menu" id="intervalList">
+										<li value='1'>1 minute</li>
+										<li value='5'>5 minutes</li>
+										<li value='10'>10 minutes</li>
+										<li value='15'>15 minutes</li>
+										<li value='30'>30 minutes</li>
+										<li value='60'>1 hour</li>
+									</ul>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Range split button -->
+					<div class="row">
+						<div class="form-group">
+							<div class="input-group">
+								<div class="input-group-btn">
+									<button type="button" class="btn btn-default btn-title">Range:</button>
+								</div>
+								<input type="text" class="form-control" id="rangeTitle" value="30 minutes" readonly></input>
+								<div class="input-group-btn">
+									<button type="button" class="btn dropdown-toggle" data-toggle="dropdown">
+										<span class="caret"></span>
+										<span class="sr-only">Toggle Dropdown</span>
+									</button>
+									<ul class="dropdown-menu dropdown-menu-right" role="menu" id="rangeList">
+										<li value='30'>30 minutes</li>
+										<li value='60'>1 hour</li>
+										<li value='120'>2 hours</li>
+										<li value='180'>3 hours</li>
+										<li value='360'>6 hours</li>
+										<li value='720'>12 hours</li>
+										<li value='1440'>24 hours</li>
+										<li value='2160'>36 hours</li>
+										<li value='2880'>48 hours</li>
+									</ul>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Date from -->
+					<div class="row">
+						<div class="form-group">
+							<div class='input-group date' id='datetimepickerFrom'>
+								<div class="input-group-btn">
+									<button type="button" class="btn btn-default btn-title" data-toggle="dropdown">Start:</button>
+								</div>
+								<input type='text' class="form-control" />
+								<span class="input-group-addon">
+									<span class="glyphicon glyphicon-calendar"></span>
+								</span>
+							</div>
+						</div>
+					</div>
+
+					<!-- Date to -->
+					<div class="row">
+						<div class="form-group">
+							<div class='input-group date' id='datetimepickerTo'>
+								<div class="input-group-btn">
+									<button type="button" class="btn btn-default btn-title" data-toggle="dropdown">End:</button>
+								</div>
+								<input type='text' class="form-control" />
+								<span class="input-group-addon">
+									<span class="glyphicon glyphicon-calendar"></span>
+								</span>
+							</div>
+						</div>
+					</div>
+
+				</div> <!-- col-md-4/legend -->
+			</div> <!-- row -->
+		</div> <!-- main-area -->
+	</div> <!-- main-container -->
+
+	<!-- Footer -->
+	<footer>
+		<p>&copy; 2014-2015 Andrey Shevtsov</p>
+	</footer>
+
+	<!-- Java scripts -->
+	<script type="text/javascript" src="js/sqlwristband.js"></script>
+	<script type="text/javascript">
+	var targetId = null;
+	var wsUrl = null;
+	var cpudata = [null];
+	var plotCpu = null;
+	var readsdata = [null];
+	var writesdata = [null];
+	var plotIo = null;
+
+	var rangeListIsChanging = false;
+	var interval = 1;
+	var range = 30;
+
+	var endDateDt = new Date();
+	var startDateDt = new Date(endDateDt.getTime() - range*60000);
+
+	var startDateStr = formatDate(startDateDt);
+	var endDateStr = formatDate(endDateDt);
+
+	var seriesNames = [];
+
+	plots['chartdivcpu'] = {
+		heightPct: 50,
+		chart: null,
+		jqplotOptions: {
+			seriesDefaults: {
+				showMarker: true,
+				lineWidth: 1,
+				markerOptions: {
+					show: true,
+					size: 6
+				}
+			},
+			series:[
+				{ label: 'CPU seconds/sec' }
+			],
+			axes: {
+				xaxis: {
+					renderer: $.jqplot.DateAxisRenderer,
+					tickOptions: {formatString:'%R\n%m/%d'}
+				},
+				yaxis: {
+					min: 0
+				}
+			},
+			cursor:{
+				show: true,
+				zoom: true,
+				showTooltip: false,
+				constrainZoomTo: 'x'
+			},
+			legend: { show: true }
+		}
+	};
+			
+	plots['chartdivio'] = {
+		heightPct: 50,
+		chart: null,
+		jqplotOptions: {
+			seriesDefaults: {
+				showMarker: true,
+				lineWidth: 1,
+				markerOptions: {
+					show: true,
+					size: 6
+				}
+			},
+			series:[
+				{ label: 'Disk Reads/sec'  },
+				{ label: 'Disk Writes/sec' }
+			],
+			axes: {
+				xaxis: {
+					renderer: $.jqplot.DateAxisRenderer,
+					tickOptions: {formatString:'%R\n%m/%d'}
+				},
+				yaxis: {
+					min: 0
+				}
+			},
+			cursor:{
+				show: true,
+				zoom: true,
+				showTooltip: false,
+				constrainZoomTo: 'x'
+			},
+			legend:{ show: true }
+		}
+	};
+
+	function reloadCpuDataError(xhr, status, err) {
+		$('#chartdivcpu').css('opacity', '1');
+		messageBox(err, 'Error');
+	}
+
+	function reloadCpuDataSuccess(jsondata, status, xhr) {
+		cpudata = jsondata;
+		plotCpu.destroy();
+
+		if (cpudata.length == 0) {
+			$('#chartdivcpu').hide();
+			$('#noCpuData').show();
+		} else {
+			$('#noCpuData').hide();
+			$('#chartdivcpu').show();
+
+			plotCpu = $.jqplot('chartdivcpu', [cpudata], plots['chartdivcpu'].jqplotOptions);
+			plotCpu.themeEngine.newTheme('plotTheme', plotTheme);
+			plotCpu.activateTheme('plotTheme');
+
+			plots['chartdivcpu'].chart = plotCpu;
+		}
+
+		$('#chartdivcpu').css('opacity', '1');
+	}
+
+	function reloadReadsDataError(xhr, status, err) {
+		$('#chartdivio').css('opacity', '1');
+		messageBox(err, 'Error');
+	}
+
+	function reloadReadsDataSuccess(jsondata, status, xhr) {
+		readsdata = jsondata;
+		plotIo.destroy();
+
+		if (readsdata.length == 0 || writesdata.length == 0) {
+			$('#chartdivio').hide();
+			$('#noIoData').show();
+		} else {
+			$('#noIoData').hide();
+			$('#chartdivio').show();
+
+			plotIo = $.jqplot('chartdivio', [readsdata,writesdata], plots['chartdivio'].jqplotOptions);
+			plotIo.themeEngine.newTheme('plotTheme', plotTheme);
+			plotIo.activateTheme('plotTheme');
+
+			plots['chartdivio'].chart = plotIo;
+		}
+
+		$('#chartdivio').css('opacity', '1');
+	}
+
+	function reloadWritesDataError(xhr, status, err) {
+		$('#chartdivio').css('opacity', '1');
+		messageBox(err, 'Error');
+	}
+
+	function reloadWritesDataSuccess(jsondata, status, xhr) {
+		writesdata = jsondata;
+		plotIo.destroy();
+
+		plotIo = $.jqplot('chartdivio', [readsdata,writesdata], plots['chartdivio'].jqplotOptions);
+		plotIo.themeEngine.newTheme('plotTheme', plotTheme);
+		plotIo.activateTheme('plotTheme');
+
+		plots['chartdivio'].chart = plotIo;
+		$('#chartdivio').css('opacity', '1');
+	}
+		
+	function startDataRefresh() {
+		$('#chartdivcpu').css('opacity', '0.5');
+		wsUrl = '/ws/fastsingle/Range/SQL%20Server%20Activity/CPU%20mils/' + targetId + '/' + startDateStr + '/' + endDateStr + '/' + interval;
+		requestDataLoad(wsUrl, reloadCpuDataSuccess);
+
+		$('#chartdivio').css('opacity', '0.5');
+		wsUrl = '/ws/fastsingle/Range/SQL%20Server%20Activity/Physical%20Reads/' + targetId + '/' + startDateStr + '/' + endDateStr + '/' + interval;
+		requestDataLoad(wsUrl, reloadReadsDataSuccess);
+
+		wsUrl = '/ws/fastsingle/Range/SQL%20Server%20Activity/Physical%20Writes/' + targetId + '/' + startDateStr + '/' + endDateStr + '/' + interval;
+		requestDataLoad(wsUrl, reloadWritesDataSuccess);
+	}
+
+	function refreshData() {
+		resetCountdown();
+
+		endDateDt = new Date();
+		startDateDt = new Date(endDateDt.getTime() - range*60000);
+
+		startDateStr = formatDate(startDateDt);
+		endDateStr = formatDate(endDateDt);
+
+		rangeListIsChanging = true;
+		$('#datetimepickerFrom').data("DateTimePicker").setDate(startDateDt);
+		$('#datetimepickerTo').data("DateTimePicker").setDate(endDateDt);
+		rangeListIsChanging = false;
+
+		startDataRefresh();
+	}
+
+	// datetimepickerFrom change handling
+	$('#datetimepickerFrom').on("dp.change", function(e) {
+		startDateDt = new Date($('#datetimepickerFrom').data("DateTimePicker").getDate());
+		startDateStr = formatDate(startDateDt);
+
+		if(!rangeListIsChanging) {
+			$("#rangeTitle").val('Custom');
+			startDataRefresh();
+		}
+	});
+
+	// datetimepickerTo change handling
+	$('#datetimepickerTo').on("dp.change", function(e) {
+		endDateDt = new Date($('#datetimepickerTo').data("DateTimePicker").getDate());
+		endDateStr = formatDate(endDateDt);
+
+		if(!rangeListIsChanging) {
+			$("#rangeTitle").val('Custom');
+			startDataRefresh();
+		}
+	});
+	
+	// interval drop-down list action handling
+	$("#intervalList li").click(function() {
+		$("#intervalTitle").val($(this).text());
+
+		interval = $(this).val();
+
+		startDataRefresh();
+	});
+
+	// range drop-down list action handling
+	$("#rangeList li").click(function() {
+		$("#rangeTitle").val($(this).text());
+
+		range = $(this).val();
+		startDateDt = new Date(endDateDt.getTime() - range*60000);
+		<!-- set datetime picker value -->
+		rangeListIsChanging = true;
+		$('#datetimepickerFrom').data("DateTimePicker").setDate(startDateDt);
+
+		startDateStr = formatDate(startDateDt);
+
+		startDataRefresh();
+		rangeListIsChanging = false;
+	});
+
+	$(document).ready(function(){
+		targetId = getURLParameter('id');
+
+		if (targetId == null)
+		{
+			messageBox("Parameter [id] was not supplied", "Error");
+			return;
+		}
+
+		$.jqplot._noToImageButton = true;
+		$.jqplot.config.enablePlugins = true;
+		$.jqplot.preDrawHooks.push(function() { var c = this.plugins.cursor; });
+
+		rangeListIsChanging = true;
+
+		$('#datetimepickerFrom').datetimepicker();
+		$('#datetimepickerFrom').data("DateTimePicker").setDate(startDateDt);
+		
+		$('#datetimepickerTo').datetimepicker();
+		$('#datetimepickerTo').data("DateTimePicker").setDate(endDateDt);
+
+		rangeListIsChanging = false;
+
+		plotCpu = $.jqplot('chartdivcpu', [cpudata], plots['chartdivcpu'].jqplotOptions);
+		plotCpu.themeEngine.newTheme('plotTheme', plotTheme);
+		plotCpu.activateTheme('plotTheme');
+
+		plots['chartdivcpu'].chart = plotCpu;
+
+		plotIo = $.jqplot('chartdivio', [readsdata,writesdata], plots['chartdivio'].jqplotOptions);
+		plotIo.themeEngine.newTheme('plotTheme', plotTheme);
+		plotIo.activateTheme('plotTheme');
+
+		plots['chartdivio'].chart = plotIo;
+
+		set_chart_div_height(plots);
+
+		enable_multi_plot_zooming();
+
+		countdown(refreshData);
+
+		refreshData();
+	}); // $(document).ready()
+
+	</script>
+</body>
+</html>

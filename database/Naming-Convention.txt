@@ -1,0 +1,22 @@
+Table naming convention
+
+Data
+====
+1 - Schema name = i+Target id (from targets table)
+2 - Probe type three letter id (from metric_types table, e.g. sql, wmi, ...)
+3 - Metric Group id (from metricGroups table)
+4 - 'Data' for Data =)
+5 - Single or multi value metric (single/multi)
+6 - Slow or fast changing values (slow/fast)
+
+Example: SQL Server Wait Stats is a multi value metric with real as the most space efficient data type - tgt5.sql_6_data_multi_fast
+
+Dictionary
+==========
+1 - Schema name = i+Target id (from targets table)
+2 - Probe type three letter id (from metric_types table, e.g. sql, wmi, ...)
+3 - Metric Group id (from metricGroups table)
+4 - 'Dict' for Dictionary
+5 - Static or Slow/Fast changing dimension (static/slow/fast)
+
+Example: Wait type of SQL Server Wait Stats - tgt5.sql_6_dict_static

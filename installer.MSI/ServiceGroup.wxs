@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
+     xmlns:util="http://schemas.microsoft.com/wix/UtilExtension"
+>
+  <!-- root folder -->
+  <Fragment>
+    <ComponentGroup Id="ServiceGroup" Directory="INSTALLFOLDER">
+      <Component Id="root_NLog.dll" Guid="{81B08226-1BAE-4EAE-8EF9-497328C2D8D4}" Win64="yes">
+        <File Id="root_NLog.dll" Source="..\qa\NLog.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="root_NLog.config" Guid="{27F18D8E-EAA8-4A64-8038-CBEE89DC9551}" Win64="yes">
+        <File Id="root_NLog.config" Source="..\qa\NLog.config" KeyPath="yes" />
+      </Component>
+      <!-- Install config file -->
+      <Component Id="root_SqlWristband.exe.config" Guid="{547C91EC-6FE1-4E93-A004-86BB3A94A11A}" Win64="yes">
+        <File Id="root_SqlWristband.exe.config" Source="..\qa\SqlWristband.exe.config" KeyPath="yes" />
+      </Component>
+      <!-- Set server name -->
+      <Component Id="xmlUpdateSvcConfigReposSrv" Guid="{CAD7AD93-0415-465D-A334-D47E4AB3A89C}" Win64="yes" KeyPath="yes">
+        <util:XmlFile Id="root_SqlWristband.exe.config.ReposSrv"
+                      Action="setValue"
+                      ElementPath="/configuration/appSettings/add[\[]@key='RepositorySqlInstance'[\]]/@value"
+                      File="[INSTALLFOLDER]SqlWristband.exe.config"
+                      Value="[REPOS_SRV]"
+                      Permanent="yes" />
+        <Condition><![CDATA[REPOS_INST = ""]]></Condition>
+      </Component>
+      <!-- Set instance name -->
+      <Component Id="xmlUpdateSvcConfigReposInst" Guid="{36378461-933C-46AE-92EA-B480235498F0}" Win64="yes" KeyPath="yes">
+        <util:XmlFile Id="root_SqlWristband.exe.config.ReposInst"
+                      Action="setValue"
+                      ElementPath="/configuration/appSettings/add[\[]@key='RepositorySqlInstance'[\]]/@value"
+                      File="[INSTALLFOLDER]SqlWristband.exe.config"
+                      Value="[REPOS_SRV]\[REPOS_INST]"
+                      Permanent="yes" />
+        <Condition><![CDATA[REPOS_INST <> ""]]></Condition>
+      </Component>
+      <!-- Set database name -->
+      <Component Id="xmlUpdateSvcConfigReposDb" Guid="{A26C7C44-21F1-4534-B879-97C87E30403E}" Win64="yes" KeyPath="yes">
+        <util:XmlFile Id="root_SqlWristband.exe.config.ReposDb"
+                      Action="setValue"
+                      ElementPath="/configuration/appSettings/add[\[]@key='RepositoryDatabaseName'[\]]/@value"
+                      File="[INSTALLFOLDER]SqlWristband.exe.config"
+                      Value="[REPOS_DB]"
+                      Permanent="yes" />
+      </Component>
+      <!-- Set log file path using CommonAppDataFolder property -->
+      <Component Id="xmlUpdateNLogConfigLogFilePath" Guid="{3C3DDF37-284C-4D51-AF5C-9B7DABA0ED09}" Win64="yes" KeyPath="yes">
+        <util:XmlFile Id="root_NLog.config.LogFilePath"
+                      Action="setValue"
+                      ElementPath="/nlog/targets/target[\[]@name='LogFile'[\]]/@fileName"
+                      File="[INSTALLFOLDER]NLog.config"
+                      Value="[LOGSFOLDER]SqlWristbandLog.txt"
+                      Permanent="yes" />
+      </Component>
+      <Component Id="root_SqlWristband.exe" Guid="{E9AF6A8D-4FCB-4AF7-BB35-FA356991D2CE}" Win64="yes">
+        <File Id="root_SqlWristband.exe" Source="..\qa\SqlWristband.exe" KeyPath="yes" />
+        <!-- Add 'Log on as a service' privilege to service account -->
+        <util:User Id="ServiceAccount"
+                   CreateUser="no"
+                   Domain="[SVC_DMN]"
+                   Name="[SVC_USR]"
+                   Password="[SVC_PWD]"
+                   LogonAsService="yes"
+                   UpdateIfExists="no"
+                   RemoveOnUninstall="no" />
+        <!-- Create event source 'SQL Wristband' in Application Event Log -->
+        <util:EventSource Log="Application"
+                          Name="SQL Wristband"
+                          EventMessageFile="%SystemRoot%\Microsoft.NET\Framework64\v4.0.30319\EventLogMessages.dll" />
+        <!-- Service configuration -->
+        <ServiceInstall Id="InstallSqlWristbandSvc"
+                        Name="SqlWristbandSvc"
+                        DisplayName="SQL Wristband"
+                        Description="SQL Server Activity Tracker"
+                        Start="auto"
+                        ErrorControl="normal"
+                        Type="ownProcess"
+                        Account="[SVC_DMN]\[SVC_USR]"
+                        Password="[SVC_PWD]"
+                        Vital="yes" />
+        <!-- Service (un)install actions upon product (un)install events -->
+        <ServiceControl Id="ControlSqlWristbandSvc"
+                        Name="SqlWristbandSvc"
+                        Start="install"
+                        Stop="both"
+                        Remove="uninstall"
+                        Wait="yes" />
+      </Component>
+    </ComponentGroup>
+
+    <!-- Create folder to store logs in ProgramData directory -->
+    <Component Id="CreateLogsFolder" Directory="LOGSFOLDER" Guid="{7848FC5B-E3B4-49F5-847E-CE6A8B9DD349}" Win64="yes">
+      <CreateFolder>
+        <util:PermissionEx User="Everyone" GenericAll="yes" />
+      </CreateFolder>
+    </Component>
+
+    <!-- Grant permission to listen on port -->
+    <CustomAction Id="PrepareRevokeListenPermissionCmd" Property="RevokeListenPermission"
+            Value="&quot;netsh&quot; http delete urlacl url=http://*:2112/" Execute="immediate"/>
+    <CustomAction Id="PrepareGrantListenPermissionCmd" Property="GrantListenPermission"
+            Value="&quot;netsh&quot; http add urlacl url=http://*:2112/ user=&quot;[SVC_DMN]\[SVC_USR]&quot; listen=yes" Execute="immediate"/>
+    <CustomAction Id="RevokeListenPermission" BinaryKey="WixCA" DllEntry="CAQuietExec" Execute="deferred" Return="ignore" Impersonate="no"/>
+    <CustomAction Id="GrantListenPermission" BinaryKey="WixCA" DllEntry="CAQuietExec" Execute="deferred" Return="check" Impersonate="no"/>
+    <InstallExecuteSequence>
+      <Custom Action="PrepareRevokeListenPermissionCmd" After="CostFinalize"/>
+      <Custom Action="PrepareGrantListenPermissionCmd" After="CostFinalize">NOT Installed</Custom>
+      <Custom Action="RevokeListenPermission" After="CreateFolders"/>
+      <Custom Action="GrantListenPermission" After="RevokeListenPermission">NOT Installed</Custom>
+    </InstallExecuteSequence>
+  </Fragment>
+</Wix>

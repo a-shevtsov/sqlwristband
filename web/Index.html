@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="shortcut icon" href="img/favicon.ico" />
+	<title>SQL Wristband - SQL Server Activity Tracker</title>
+
+	<!-- Bootstrap -->
+		<link href="css/bootstrap.min.css" rel="stylesheet">
+		<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+		<script src="js/jquery/jquery.min.js"></script>
+		<!-- Include all compiled plugins (below), or include individual files as needed -->
+		<script src="js/bs/bootstrap.min.js"></script>
+		<script src="js/bs/popover.js"></script>
+	<!-- Bootstrap -->
+
+	<!-- Tools -->
+		<script src="js/base64.js"></script>
+	<!-- Tools -->
+
+	<!-- Customization -->
+		<link href="css/sqlwristband.css" rel="stylesheet">
+	<!-- Customization -->
+</head>
+
+<body>
+	<!-- 'Message box' modal -->
+	<div class="modal fade" id="messageBox" tabindex="-1" role="dialog" aria-labelledby="messageBoxLabel" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal">
+						<span aria-hidden="true">&times;</span>
+						<span class="sr-only">Close</span>
+					</button>
+					<h4 class="modal-title" id="messageBoxLabel"></h4>
+				</div>
+				<div class="modal-body">
+					<span id="messageBoxText"></span>
+				</div>
+				<div class="modal-footer">
+					<button id="closeButton" type="button" class="btn btn-primary" data-dismiss="modal" onclick="activeModal='';">Close</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- 'Add target' modal -->
+	<div class="modal fade" id="addTarget" tabindex="-1" role="dialog" aria-labelledby="addTargetLabel" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal">
+						<span aria-hidden="true">&times;</span>
+						<span class="sr-only">Close</span>
+					</button>
+					<h4 class="modal-title" id="addTargetLabel">Add SQL Server Instance</h4>
+				</div>
+				<div class="modal-body">
+					<form>
+						<div>
+							<label>Server name (hostname or hostname\instance)</label>
+							<input id="targetName" class="oneColumnInput form-control" type="text" maxlength="500" />
+							<div class="addTargetTopMargin form-inline">
+								<label class="control-label">Authentication type: </label>
+								<input type="radio" name="auth" value="windows" checked onclick="disableUserPassInputs();"><span class="radio">Windows</span>
+								<input type="radio" name="auth" value="sql" onclick="enableUserPassInputs();"><span class="radio">SQL</span>
+							</div><!-- /form-inline -->
+							<ul id="sqlUserPass" class="addTargetTopMargin form-inline hidden">
+								<li><label>Username: </label><input id="sqlUsername" class="form-control inline-form-margin" type="text" maxlength="64" value="sqlWristband" onkeyup="updateGrantSnippet(this.value);"></li>
+								<li><label>Password: </label><input id="sqlPassword" class="form-control inline-form-margin" type="password" maxlength="64"></li>
+							</ul>
+						</div>
+						<div class="addTargetTopMargin">
+							<label>Please execute the following script on the target server before clicking 'Add Instance' button</label>
+							<pre>IF NOT EXISTS (
+  SELECT NULL FROM sys.server_principals
+  WHERE name = '<span id="serviceAccount1"></span>'
+)
+BEGIN
+  CREATE LOGIN [<span id="serviceAccount2"></span>]<span id="fromWindows">
+    FROM WINDOWS</span>
+    WITH<span id="withPassword" class="hidden"> PASSWORD=&ltpassword&gt,</span> DEFAULT_DATABASE=[master]
+END
+GO
+
+GRANT VIEW SERVER STATE, VIEW ANY DEFINITION TO [<span id="serviceAccount3"></span>]
+GO</pre>
+						</div>
+					</form>
+				</div><!-- /modal-body -->
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal"><span class="glyphicon glyphicon-remove"></span>Cancel</button>
+					<button type="button" class="btn btn-primary" onclick="addTarget();"><span class="glyphicon glyphicon-plus"></span>Add Instance</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<nav class="navbar navbar-default" role="navigation">
+		<!-- Brand and toggle get grouped for better mobile display -->
+		<div class="navbar-header">
+			<button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar-collapse">
+				<span class="sr-only">Toggle navigation</span>
+				<span class="icon-bar"></span>
+				<span class="icon-bar"></span>
+				<span class="icon-bar"></span>
+			</button>
+			<a class="navbar-brand" href="Index.html">sql wristband</a>
+			<span class="navbar-title">Dashboard</span>
+		</div>
+
+		<!-- Collect the nav links, forms, and other content for toggling -->
+		<div class="collapse navbar-collapse" id="navbar-collapse">
+			<ul class="nav navbar-nav navbar-right">
+				<li><a href="javascript:toggleRefresh();"><span class="glyphicon glyphicon-refresh"></span><span id="refreshCountdown">60</span></a></li>
+				<li><a href="javascript:reloadStatusTable();"><span class="glyphicon glyphicon-refresh"></span>Refresh</a></li>
+				<li><a href="#" data-toggle="modal" data-target="#addTarget"><span class="glyphicon glyphicon-plus"></span>Add Instance</a></li>
+				<li><a href="#" onClick="toggleAllDeleteCheckboxes();" id="deleteTarget"><span class="glyphicon glyphicon-trash"></span>Delete Instance(s)</a></li>
+				<li><a href="Settings.html"><span class="glyphicon glyphicon-cog"></span>Settings</a></li>
+			</ul>
+		</div><!-- /.navbar-collapse -->
+	</nav><!-- navbar -->
+
+	<!-- Main container -->
+	<div id="main-container">
+		<div id="main-area">
+			<div class="table-responsive">		
+				<form role="form" id="deleteTargetForm">
+					<div id="deleteTargetButtons" class="btn-group hidden col-md-2 col-md-offset-5">
+						<div class="btn-group">
+							<button type="button" class="btn btn-primary" onclick="submitDeleteTargets();"><span class="glyphicon glyphicon-trash"></span>Delete</button>
+						</div>
+						<div class="btn-group">
+							<button type="button" class="btn btn-default" onclick="cancelDeleteTargets();"><span class="glyphicon glyphicon-remove"></span>Cancel</button>
+						</div>
+					</div>
+					<table class="table table-striped table-hover table-condensed" id="statusTable">
+						<tr><td align="center">Loading data...</td></tr>
+					</table>
+				</form>
+			</div><!-- table-responsive -->
+		</div><!-- main-area -->
+	</div> <!-- main-container -->
+
+	<footer>
+		<p>&copy; 2014-2015 Andrey Shevtsov</p>
+	</footer>
+
+	<script type="text/javascript" src="js/sqlwristband.js"></script>
+	<script type="text/javascript">
+		serviceAccount = "";
+		auth = "windows";
+
+		function reloadStatusTable()
+		{
+			resetCountdown();
+
+			callWebService('StatusTable', 'GET', '/ws/dashboard/StatusTable', '', true, function (data) {
+				$('#statusTable').html(rebuildStatusTable(data));
+			});
+		}
+
+		function rebuildStatusTable(data)
+		{
+			var htmlTable =
+'<thead>\
+<tr>\
+<th class="valign"><span class="glyphicon glyphicon-trash deleteCheckbox"></span></th>\
+<th class="valign">Instance Name</th>\
+<th class="valign">Version<br/>\
+Edition</th>\
+<th class="valign">Top Wait Type</th>\
+<th class="valign">Top File - Reads<br/>Database / File</th>\
+<th class="valign">Top File - Writes<br/>Database / File</th>\
+<th class="valign">CPU</th>\
+<th class="valign">Reads</th>\
+<th class="valign">Writes</th>\
+<th class="valign">Last Poll</th>\
+</tr>\
+</thead>\
+<tbody>\
+';
+			for(var key in data) {
+				htmlTable +=
+'<tr>\
+<td class="valign"><input type="checkbox" value="' + data[key].id + '" class="deleteCheckbox" /></td>\
+<td class="valign"><b>' + data[key].serverName + '</b></td>\
+<td>' + data[key].version + '<br/>' + data[key].edition + '</td>\
+<td class="valign"><a href="WaitStats.html?id=' + data[key].id + '">' + data[key].topWait + '</a></td>\
+<td class="valign"><a href="FileStats.html?id=' + data[key].id + '">' + data[key].topFileRead + '</a></td>\
+<td class="valign"><a href="FileStats.html?id=' + data[key].id + '">' + data[key].topFileWrite + '</a></td>\
+<td class="valign"><a href="CPU_IO.html?id=' + data[key].id + '">' + data[key].cpu + '</a></td>\
+<td class="valign"><a href="CPU_IO.html?id=' + data[key].id + '">' + data[key].ioReads + '</a></td>\
+<td class="valign"><a href="CPU_IO.html?id=' + data[key].id + '">' + data[key].ioWrites + '</a></td>\
+<td class="valign">' + data[key].lastPoll + '</td>\
+</tr>';
+			}
+
+			htmlTable += '</tbody>';
+
+			return htmlTable;
+		}
+
+		function addTarget()
+		{
+			var serverName  = $('#targetName')[0].value;
+			var sqlUsername = $('#sqlUsername')[0].value;
+			var sqlPassword = $('#sqlPassword')[0].value;
+
+			var newTarget = {
+				"auth": auth,
+				"serverName": Base64.encode(serverName),
+				"username": (auth == "sql" ? Base64.encode(sqlUsername) : ""),
+				"password": (auth == "sql" ? Base64.encode(sqlPassword) : "")
+			};
+
+			callWebService('addTarget', 'POST', '/ws/config/addTarget', newTarget, false, function (data) {
+				reloadStatusTable();
+			});
+
+			$('#addTarget').modal('hide');
+
+			return false;
+		}
+
+		function cancelDeleteTargets()
+		{
+			$('.deleteCheckbox').hide();
+			$('#deleteTargetButtons').addClass('hidden');
+
+			$("#deleteTargetForm input").each(function(){
+				if ($(this)[0].checked)
+					$(this)[0].checked = false;
+			});
+		}
+
+		function toggleAllDeleteCheckboxes()
+		{
+			$('.deleteCheckbox').show();
+			$('#deleteTargetButtons').removeClass('hidden');
+			return false;
+		}
+
+		function submitDeleteTargets()
+		{
+			// compose parameter string
+			var url = "/ws/config/deleteTarget";
+			$("#deleteTargetForm input").each(function(){
+				if ($(this)[0].checked)
+					url = url + "/" + $(this)[0].value;
+			});
+			
+			// uncheck all checkboxes first
+			$("#deleteTargetForm input").each(function(){
+				if ($(this)[0].checked)
+					$(this)[0].checked = false;
+			});
+
+			cancelDeleteTargets();
+
+			// submit delete request
+			callWebService('deleteTarget', 'GET', url, '', true, function (data) {
+				reloadStatusTable();
+			});
+
+			return false;
+		}
+
+		function retrieveServiceAccountName()
+		{
+			callWebService('getServiceAccount', 'GET', '/ws/config/getServiceAccount', '', false, function (data) {
+				serviceAccount = data;
+			});
+		}
+
+		function enableUserPassInputs()
+		{
+			$('#sqlUserPass').removeClass('hidden');
+			$('#withPassword').removeClass('hidden');
+			$('#fromWindows').addClass('hidden');
+			auth = "sql";
+			updateGrantSnippet($('#sqlUsername')[0].value);
+		}
+
+		function updateGrantSnippet(username)
+		{
+			$('#serviceAccount1').text(username);
+			$('#serviceAccount2').text(username);
+			$('#serviceAccount3').text(username);
+		}
+
+		function disableUserPassInputs()
+		{
+			updateGrantSnippet(serviceAccount);
+			$('#sqlUserPass').addClass('hidden');
+			$('#withPassword').addClass('hidden');
+			$('#fromWindows').removeClass('hidden');
+			auth = "windows";
+		}
+
+		// set focus in add target modal
+		$('#addTarget').on('shown.bs.modal', function () {
+			activeModal = 'addTarget';
+			updateGrantSnippet(serviceAccount);
+				$('#targetName').focus();
+		});
+
+		$(document).ready(function () {
+			reloadStatusTable();
+			countdown(reloadStatusTable);
+			retrieveServiceAccountName();
+		});
+		
+	</script>
+</body>
+</html>

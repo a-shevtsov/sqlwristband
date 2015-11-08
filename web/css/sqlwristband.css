@@ -1,0 +1,156 @@
+@font-face {
+	font-family: FugazOne;
+	src: url('../fonts/FugazOne-Regular.ttf');
+}
+
+.navbar-brand {
+	font-family: FugazOne;
+}
+
+.navbar {
+	margin-bottom: 5px;
+	min-height: 36px;
+}
+
+.navbar-brand,
+.navbar-nav li a {
+	line-height: 36px;
+	height: 36px;
+	padding-top: 0;
+}
+
+.navbar-nav {
+	margin: 0;
+}
+
+.navbar-default .navbar-toggle {
+	top: 1px;
+	margin-top: 0;
+	margin-bottom: 0;
+	border-color: transparent;
+	border-radius: 2px;
+}
+
+.navbar-title {
+	float: left;
+	margin-top: 0;
+	margin-bottom: 0;
+	padding: 7px 15px 8px 15px;
+	height: 36px;
+	background-color: #dddddd;
+}
+
+.table {
+	margin-bottom: 0;
+}
+
+footer>p {
+	padding-top: 10px;
+	padding-right: 10px;
+	color: #808080;
+	text-align: right;
+}
+
+.glyphicon {
+	margin-right: 5px;
+	top: 2px;
+}
+
+.legend>ul {
+	-webkit-padding-start: 0;
+}
+
+#messagediv {
+	display: none;
+}
+
+.btn-title {
+	width: 75px;
+}
+
+input[type="checkbox"] {
+	box-sizing: border-box;
+	-webkit-box-sizing:border-box;
+	-moz-box-sizing: border-box;
+	margin-right: 5px;
+}
+
+.oneColumnInput {
+	width: 100%;
+}
+
+.first-input {
+	margin-top: 10px;
+}
+
+.chart {
+	height: 100%;
+	-webkit-user-select: none;
+}
+
+.deleteCheckbox {
+	display: none;
+}
+
+#noData, #noReadsData, #noWritesData, #noCpuData, #noIoData {
+	display: none;
+	line-height: 200px;
+	text-align: center;
+	vertical-align: middle;
+	font-size: 20px;
+}
+
+.valign {
+	vertical-align: middle !important;
+}
+
+th {
+	color: #777;
+}
+
+#query {
+	width: 100%;
+}
+
+.addTargetTopMargin {
+	margin-top: 15px;
+}
+
+.inline-form-margin {
+	margin-left: 10px;
+}
+
+input[type=text], input[type=radio] {
+	margin-bottom: 5px;
+}
+
+input[type=radio] {
+	margin: 0 5px 0 10px;
+	vertical-align: middle;
+}
+
+.row {
+	margin-left: 0;
+	margin-right: 0;
+}
+
+ul>li {
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+ul>li>span {
+	vertical-align: middle;
+	margin-left: 10px;
+	display: inline-block;
+	width: 90%;
+	white-space: nowrap;
+	overflow: hidden;
+	direction: rtl;
+	text-align: left;	
+}
+
+.series-list {
+	list-style-type: none;
+	padding-left: 0;
+}

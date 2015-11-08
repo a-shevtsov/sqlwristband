@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
+     xmlns:sql='http://schemas.microsoft.com/wix/SqlExtension'
+>
+	<Fragment>
+    <Binary Id='CreateSchemaScr' SourceFile='..\database\bin\Release\schema_Create.sql' />
+
+    <ComponentGroup Id='DatabaseGroup'>
+      <Component Id='SqlComponent' Guid='{5CF8E38B-0183-4625-9331-D2782035FC6F}' Directory='INSTALLFOLDER' KeyPath='yes' Win64='yes'>
+        <sql:SqlDatabase Id='SqlDatabase' Server='[REPOS_SRV]' Instance='[REPOS_INST]' Database='[REPOS_DB]'
+          CreateOnInstall='yes' DropOnUninstall='no' ContinueOnError='no' ConfirmOverwrite='no'>
+          <sql:SqlString Id='ConfigureDb' Sequence='20' ExecuteOnInstall='yes' ExecuteOnReinstall='yes'
+                         SQL=
+"USE master;
+-- Turn off database auto-close option
+ALTER DATABASE [\[]{[REPOS_DB]}[\]] SET AUTO_CLOSE OFF WITH NO_WAIT;
+DECLARE @name sysname
+-- Set data file size and growth
+SELECT @name = name FROM [\[]{[REPOS_DB]}[\]].sys.database_files WHERE type = 0
+EXEC (N'ALTER DATABASE [\[]{[REPOS_DB]}[\]] MODIFY FILE (NAME = ''' + @name + N''', SIZE=64MB, FILEGROWTH=64MB)')
+-- Set log file size and growth
+SELECT @name = name FROM [\[]{[REPOS_DB]}[\]].sys.database_files WHERE type = 1
+EXEC (N'ALTER DATABASE [\[]{[REPOS_DB]}[\]] MODIFY FILE (NAME = ''' + @name + N''', SIZE=64MB, FILEGROWTH=64MB)')
+" />
+          <sql:SqlString Id='CreateLogin' Sequence='10' ExecuteOnInstall='yes' ExecuteOnReinstall='yes'
+                         SQL=
+"USE master;
+IF NOT EXISTS (SELECT 0 FROM sys.server_principals WHERE name = N&apos;{[SVC_DMN]}\{[SVC_USR]}&apos;)
+  CREATE LOGIN [\[]{[SVC_DMN]}\{[SVC_USR]}[\]] FROM WINDOWS;" />
+          <sql:SqlString Id='ChangeOwner' Sequence='30' ExecuteOnInstall='yes' ExecuteOnReinstall='yes'
+                         SQL=
+"USE [\[]{[REPOS_DB]}[\]];
+EXEC dbo.sp_changedbowner @loginame = N&apos;{[SVC_DMN]}\{[SVC_USR]}&apos;, @map = false;" />
+          <sql:SqlScript Id='CreateSchema' BinaryKey='CreateSchemaScr' ExecuteOnInstall='yes' ContinueOnError='no' Sequence='40' />
+        </sql:SqlDatabase>
+      </Component>
+    </ComponentGroup>
+
+  </Fragment>
+</Wix>

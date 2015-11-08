@@ -1,0 +1,8 @@
+SQL Wristband Installation Guide
+
+1) Install .NET Framework 64bit 4.5.1
+2) Log in a server with AD credentials of a user that has sysadmin server role on any SQL Server instance
+3) Launch SqlWristbandSetup.msi and install the tool. sysadmin role can be revoked once installation is complete
+4) Add a rule in Inbound Rules section of Windows Firewall for TCP port 2112
+5) Open http://localhost:2112 or http://servername:2112 URL in a browser and add targets (SQL Server instances you want to monitor)
+6) Click Settings button in the top-right corner, click Enter button, enter license key and click Save.
