@@ -11,6 +11,20 @@ The tool is a small Windows service with the following features:
  * Web-based client
  * Space-efficient repository
 
+### Screenshots
+
+#### Wait Stats
+
+![Wait Stats](/screenshots/Wait_Stats.png)
+
+#### File Stats
+
+![File Stats](/screenshots/File_Stats.png)
+
+#### CPU and I/O
+
+![CPU and I/O](/screenshots/CPU_IO.png)
+
 ### Installation
 SQL Wristband Installation Guide
 
